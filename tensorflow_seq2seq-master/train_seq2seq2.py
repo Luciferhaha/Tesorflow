@@ -21,21 +21,7 @@ class Config(object):
 	target_vocab_size = None
 
 
-# def load_data(path):
-# 	num2en = {"1":"one", "2":"two", "3":"three", "4":"four", "5":"five", "6":"six", "7":"seven", "8":"eight", "9":"nine", "0":"zero"}
-# 	docs_source = []
-# 	docs_target = []
-# 	for i in range(10000):
-# 		doc_len = random.randint(1,8)
-# 		doc_source = []
-# 		doc_target = []
-# 		for j in range(doc_len):
-# 			num = str(random.randint(0,9))
-# 			doc_source.append(num)
-# 			doc_target.append(num2en[num])
-# 		docs_source.append(doc_source)
-# 		docs_target.append(doc_target)
-# 	return docs_source, docs_target
+
 def load_data(path):
 	with open(path) as f2:
 		sumlist=[]
@@ -55,8 +41,8 @@ def make_vocab(docs):
 			if w not in w2i:
 				i2w[len(w2i)] = w
 				w2i[w] = len(w2i)
-	print(w2i)
-	print(i2w)
+	#print(w2i)
+	#print(i2w)
 	return w2i, i2w
 	
 	
@@ -105,11 +91,11 @@ def get_batch(docs_source, w2i_source, docs_target, w2i_target, batch_size):
 if __name__ == "__main__":
 
 	print("(1)load data......")
-	docs_source= load_data(Source_File_path);
-	docs_target=load_data(Taget_file_path);
+	docs_source= load_data(Source_File_path)[:20000];
+	docs_target=load_data(Taget_file_path)[:20000];
 	w2i_source, i2w_source = make_vocab(docs_source)
 	print("w2i_source")
-	print(w2i_source)
+	#print(w2i_source)
 	w2i_target, i2w_target = make_vocab(docs_target)
 	
 	print("(2) build model......")
