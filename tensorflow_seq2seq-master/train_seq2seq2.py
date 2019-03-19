@@ -40,8 +40,6 @@ def load_data(path):
 		for index,lines in enumerate(f2):
 			doclist2=lines.split(" ")
 			sumlist.append(doclist2)
-			if index == 10000:
-				break
 	return sumlist;
 
 
@@ -116,7 +114,7 @@ if __name__ == "__main__":
 	config = Config()
 	config.source_vocab_size = len(w2i_source)
 	config.target_vocab_size = len(w2i_target)
-	print(w2i_target)
+	#print(w2i_target)
 	model = Seq2seq(config=config, w2i_target=w2i_target, useTeacherForcing=True, useAttention=True, useBeamSearch=1)
 	
 	
