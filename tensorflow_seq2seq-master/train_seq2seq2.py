@@ -2,8 +2,10 @@ import tensorflow as tf
 import numpy as np
 import random
 import time
+import os
 from model_seq2seq_contrib import Seq2seq
 # from model_seq2seq import Seq2seq
+os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
 tf_config = tf.ConfigProto(allow_soft_placement=True)
 tf_config.gpu_options.allow_growth = True 
