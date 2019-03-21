@@ -3,6 +3,7 @@ import numpy as np
 import random
 import time
 from model_seq2seq_contrib import Seq2seq
+from mypreprocess import *
 # from model_seq2seq import Seq2seq
 
 tf_config = tf.ConfigProto(allow_soft_placement=True)
@@ -31,24 +32,24 @@ def load_data(path):
 			doc_target.append(num2en[num])
 		docs_source.append(doc_source)
 		docs_target.append(doc_target)
-
+	print(docs_source)
 	return docs_source, docs_target
 
 	
 def make_vocab(docs):
-	w2i = {"_PAD":0, "_GO":1, "_EOS":2}
-	i2w = {0:"_PAD", 1:"_GO", 2:"_EOS"}
+	w2i = {"<PAD>":0, "<GO>":1, "<EOS>":2}
+	i2w = {0:"<PAD>", 1:"<GO>", 2:"<EOS>"}
 	for doc in docs:
 		for w in doc:
 			if w not in w2i:
 				i2w[len(w2i)] = w
 				w2i[w] = len(w2i)
 	return w2i, i2w
-	
-	
+
+
 def doc_to_seq(docs):
-	word2int = {"_PAD":0, "_GO":1, "_EOS":2}
-	int2word = {0:"_PAD", 1:"_GO", 2:"_EOS"}
+	word2int = {"<PAD>":0, "<GO>":1, "<EOS>":2}
+	int2word = {0:"<PAD>", 1:"<GO>", 2:"<EOS>"}
 	seqs = []
 	for doc in docs:
 		seq = []
@@ -76,8 +77,10 @@ def get_batch(docs_source, w2i_source, docs_target, w2i_target, batch_size):
 	max_target_len = max(target_lens)
 		
 	for p in ps:
-		source_seq = [w2i_source[w] for w in docs_source[p]] + [w2i_source["_PAD"]]*(max_source_len-len(docs_source[p]))
-		target_seq = [w2i_target[w] for w in docs_target[p]] + [w2i_target["_PAD"]]*(max_target_len-1-len(docs_target[p]))+[w2i_target["_EOS"]]
+		# print([w2i_source[w] for w in docs_source[p]])
+		print(p)
+		source_seq = [w2i_source[w] for w in docs_source[p]] + [w2i_source["<PAD>"]]*(max_source_len-len(docs_source[p]))
+		target_seq = [w2i_target[w] for w in docs_target[p]] + [w2i_target["<PAD>"]]*(max_target_len-1-len(docs_target[p]))+[w2i_target["<EOS>"]]
 		source_batch.append(source_seq)
 		target_batch.append(target_seq)
 	

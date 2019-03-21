@@ -2,16 +2,16 @@ import tensorflow as tf
 import numpy as np
 import random
 import time
-import os
 from model_seq2seq_contrib import Seq2seq
-# from model_seq2seq import Seq2seq
-os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+from mypreprocess import *
+
 
 tf_config = tf.ConfigProto(allow_soft_placement=True)
-tf_config.gpu_options.allow_growth = True 
-Source_File_path="./data/normal.txt"
-Taget_file_path ="./data/simple.txt"
+tf_config.gpu_options.allow_growth = True
 
+source_int,target_int ,int2word, word2int= mypreprocess().process_data()
+docs_source =mypreprocess().data_source
+docs_target =mypreprocess().data_target
 class Config(object):
 	embedding_dim = 100
 	hidden_dim = 50
@@ -22,50 +22,40 @@ class Config(object):
 
 
 
-def load_data(path):
-	with open(path) as f2:
-		sumlist=[]
-		for index,lines in enumerate(f2):
-			doclist2=lines.split(" ")
-			sumlist.append(doclist2)
-	return sumlist;
-
-
 
 	
-def make_vocab(docs):
-	w2i = {"_PAD":0, "_GO":1, "_EOS":2}
-	i2w = {0:"_PAD", 1:"_GO", 2:"_EOS"}
-	for doc in docs:
-		for w in doc:
-			if w not in w2i:
-				i2w[len(w2i)] = w
-				w2i[w] = len(w2i)
-	#print(w2i)
-	#print(i2w)
-	return w2i, i2w
-	
-	
-def doc_to_seq(docs):
-	w2i = {"_PAD":0, "_GO":1, "_EOS":2}
-	i2w = {0:"_PAD", 1:"_GO", 2:"_EOS"}
-	seqs = []
-	for doc in docs:
-		seq = []
-		for w in doc:
-			if w not in w2i:
-				i2w[len(w2i)] = w
-				w2i[w] = len(w2i)
-			seq.append(w2i[w])
-		seqs.append(seq)
-	return seqs, w2i, i2w
+# def make_vocab(docs):
+# 	w2i = {"<PAD>":0, "<GO>":1, "<EOS>":2}
+# 	i2w = {0:"<PAD>", 1:"<GO>", 2:"<EOS>"}
+# 	for doc in docs:
+# 		for w in doc:
+# 			if w not in w2i:
+# 				i2w[len(w2i)] = w
+# 				w2i[w] = len(w2i)
+# 	return w2i, i2w
+#
+#
+# def doc_to_seq(docs):
+# 	word2int = {"<PAD>":0, "<GO>":1, "<EOS>":2}
+# 	int2word = {0:"<PAD>", 1:"<GO>", 2:"<EOS>"}
+# 	seqs = []
+# 	for doc in docs:
+# 		seq = []
+# 		for w in doc:
+# 			if w not in word2int:
+# 				int2word[len(word2int)] = w
+# 				word2int[w] = len(word2int)
+# 			seq.append(word2int[w])
+# 		seqs.append(seq)
+# 	return seqs, word2int, int2word
 
 
 def get_batch(docs_source, w2i_source, docs_target, w2i_target, batch_size):
 	ps = []
 	while len(ps) < batch_size:
 		ps.append(random.randint(0, len(docs_source)-1))
-	
+	print(ps[0])
+	print(ps[1])
 	source_batch = []
 	target_batch = []
 	
@@ -76,14 +66,12 @@ def get_batch(docs_source, w2i_source, docs_target, w2i_target, batch_size):
 	max_target_len = max(target_lens)
 		
 	for p in ps:
-		source_seq = [w2i_source[w] for w in docs_source[p]] + [w2i_source["_PAD"]]*(max_source_len-len(docs_source[p]))
-		target_seq = [w2i_target[w] for w in docs_target[p]] + [w2i_target["_PAD"]]*(max_target_len-1-len(docs_target[p]))+[w2i_target["_EOS"]]
+		# print([w2i_source[w] for w in docs_source[p]])
+		# print(p)
+		source_seq = [w2i_source[w] for w in docs_source[p]] + [w2i_source["<PAD>"]]*(max_source_len-len(docs_source[p]))
+		target_seq = [w2i_target[w] for w in docs_target[p]] + [w2i_target["<PAD>"]]*(max_target_len-1-len(docs_target[p]))+[w2i_target["<EOS>"]]
 		source_batch.append(source_seq)
 		target_batch.append(target_seq)
-	# print("source_batch")
-	# print(source_batch)
-	# print("target_batch")
-	# print(target_batch)
 	
 	return source_batch, source_lens, target_batch, target_lens
 	
@@ -91,18 +79,15 @@ def get_batch(docs_source, w2i_source, docs_target, w2i_target, batch_size):
 if __name__ == "__main__":
 
 	print("(1)load data......")
-	docs_source= load_data(Source_File_path)[:20000];
-	docs_target=load_data(Taget_file_path)[:20000];
-	w2i_source, i2w_source = make_vocab(docs_source)
-	print("w2i_source")
-	#print(w2i_source)
-	w2i_target, i2w_target = make_vocab(docs_target)
+
+	w2i_source, i2w_source = source_int,int2word
+	w2i_target, i2w_target = word2int, int2word
 	
 	print("(2) build model......")
 	config = Config()
 	config.source_vocab_size = len(w2i_source)
 	config.target_vocab_size = len(w2i_target)
-	#print(w2i_target)
+	print(w2i_target)
 	model = Seq2seq(config=config, w2i_target=w2i_target, useTeacherForcing=True, useAttention=True, useBeamSearch=1)
 	
 	
@@ -118,8 +103,7 @@ if __name__ == "__main__":
 		losses = []
 		total_loss = 0
 		for batch in range(batches):
-			source_batch, source_lens, target_batch, target_lens \
-				=get_batch(docs_source, w2i_source, docs_target, w2i_target, config.batch_size)
+			source_batch, source_lens, target_batch, target_lens = get_batch(docs_source, w2i_source, docs_target, w2i_target, config.batch_size)
 			
 			feed_dict = {
 				model.seq_inputs: source_batch,
